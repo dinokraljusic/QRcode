@@ -402,7 +402,7 @@ namespace qr
                         w.Write("<tr> ");
                         for (int j = 0; j < 21; j++)
                         {
-                            if (qr[i][j] == 1) w.Write("<td style='background-color:blue;'>" + " </td>");
+                            if (qr[i][j] == 1) w.Write("<td style='background-color:black;'>" + " </td>");
                             else w.Write("<td>"+" </td>");
                         }
                         w.Write(" </tr>");

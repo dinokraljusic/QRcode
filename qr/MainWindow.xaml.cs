@@ -298,7 +298,7 @@ namespace qr
                     }
 
                     updateCount();
-                    makeHTML("4");
+
                     if (allFilled())
                         break;
 

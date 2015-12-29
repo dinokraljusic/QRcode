@@ -39,6 +39,7 @@ namespace qr
                         "1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0," + nl +
                         "1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0";
 
+            //represents finder patterns (upper and lower left, and upper right corners)
             corner = new List<List<int>>
             {
                 new List<int>() {1, 1, 1, 1, 1, 1, 1, 0},
@@ -51,8 +52,10 @@ namespace qr
                 new List<int>() {0, 0, 0, 0, 0, 0, 0, 0}
             };
 
+            //represents timing patterns http://www.thonky.com/qr-code-tutorial/format-version-information
             fixedCells = new List<int>() {1,0,1,0,1};
 
+            //css for output qr codes
             HTMLstyle = @"table{
             margin: 6% 0px 0px 8%;
 		    border: none;
@@ -65,6 +68,7 @@ namespace qr
             }";
         }
 
+        //row, column - respective textbox entry; cuurentRows, curentColumns - current count of ones in rows/columns; qr - qr matrix
         private List<int> row, column, currentRows, currentColumns;
         private List<List<int>> qr;
 
@@ -80,15 +84,18 @@ namespace qr
                 for (int j = 0; j < corner[i].Count; j++)
                 {
                     qr[i][j] = corner[i][j];
+
+                    //since 'corners' include lower row of zeros, it must not be included below the qr matrix
                     if(i<7)
                         qr[i+14][j] = corner[i][j];
-                
+                    //same, but for the right side
                     if(j<7)
                         qr[i][j + 14] = corner[i][j];
                 }
             }
         }
 
+        //adds timing patterns and dark module
         private void addFixed()
         {
             for (int i = 0; i < fixedCells.Count; i++)
@@ -96,10 +103,11 @@ namespace qr
                     qr[6][8+i] = fixedCells[i];
                     qr[8+i][6] = fixedCells[i];
             }
-
+            //dark module:
             qr[13][8] = 1;
         }
 
+        //updates currentRows and currentColumns count so as to correspond with the current state
         private void updateCount()
         {
             currentRows = new List<int> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -113,7 +121,7 @@ namespace qr
                     currentColumns[j] += qr[i][j];
                 }
             }
-
+            //If any row or columns has more ones than specified 'rows'/'columns'
             for (int i = 0; i < row.Count; i++)
             {
                 if (currentRows[i] > row[i] || currentColumns[i]>column[i])
@@ -121,6 +129,7 @@ namespace qr
             }
         }
 
+        //checks if all rows and columns are filled
         private bool allFilled()
         {
             for (int i = 0; i < row.Count; i++)
@@ -131,16 +140,19 @@ namespace qr
             return true;
         }
 
+        //checks if the current row is filled
         private bool rowFilled(int i)
         {
             return row[i] - currentRows[i] == 0;
         }
 
+        //checks if the current column is filled
         private bool columnFilled(int i)
         {
             return column[i] - currentColumns[i] == 0;
         }
 
+        //checks if cell is available (can potentially be 1)
         private bool isAvailableRow(int i, int j)
         {
             if (qr[i][j] == 1) return false;
@@ -172,6 +184,7 @@ namespace qr
             return !rowFilled(i);
         }
 
+        //if any of the two is 1, both have to be 1. (i, j) - first cell, (k, l) - second cell
         public void setSame(int i, int j, int k, int l)
         {
             if (qr[i][j] == 1 || qr[k][l] == 1)
@@ -181,6 +194,7 @@ namespace qr
             }
         }
 
+        //checks the cells which must correspond to each other, found in 9th row and 9th column (blue) http://www.thonky.com/qr-code-tutorial/format-version-information
         public void checkSame()
         {
             for (int i = 0; i < 8; i++)
@@ -234,6 +248,8 @@ namespace qr
 
                 addCorners();
                 updateCount();
+                
+                //adds timing patterns:
                 addFixed();
                 updateCount();
 
@@ -245,9 +261,12 @@ namespace qr
 
                 while (!allFilled())
                 {
+                    //Dictionary: in specified row/column, these columns/rows could contain 1
                     Dictionary<int, List<int>> availableRowCell = new Dictionary<int, List<int>>();
                     Dictionary<int, List<int>> availableColumnCell = new Dictionary<int, List<int>>();
 
+
+                    //iterates through all rows and checks which cell could be 1
                     for (int i = 0; i < row.Count; i++)
                     {
                         if (!rowFilled(i))
@@ -263,14 +282,17 @@ namespace qr
                         }
                     }
 
+                    // iterates through all rows... #1
                     for (int i = 0; i < row.Count; i++)
                     {
+                        //if row is not filled and ALL available cells can be filled
                         if (availableRowCell.ContainsKey(i) && availableRowCell[i].Count == row[i] - currentRows[i])
                         {
                             foreach (var j in availableRowCell[i])
                             {
                                 qr[i][j] = 1;
 
+                                //checks if (i,j) has a corresponding cell, eg. checkSame
                                 if (i == 8)
                                 {
                                     if (j < 6 || j > 14)
@@ -309,6 +331,7 @@ namespace qr
                     if (allFilled())
                         break;
 
+                    //same as #1, but for columns
                     for (int j = 0; j < column.Count; j++)
                     {
                         if (!columnFilled(j))
@@ -366,6 +389,8 @@ namespace qr
                     }
 
                     updateCount();
+
+                    //nothing's changed between iterations. Program cannot find a solution, prevented infinite looping.
                     if (previousRowCount == availableRowCell.Count && previousColumnCount == availableColumnCell.Count)
                         throw new Exception("Cannot solve QR.");
                     
@@ -386,6 +411,7 @@ namespace qr
             
         }
 
+        //creates HTML file that displays a QR code
         public void makeHTML(String filename="test.html")
         {
             using (FileStream fs = new FileStream(filename + ".html", FileMode.Create))

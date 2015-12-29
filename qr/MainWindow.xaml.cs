@@ -65,14 +65,13 @@ namespace qr
             }";
         }
 
-        private List<Int32> row, column, currentRows, currentColumns;
-        private List<List<Int32>> qr;
+        private List<int> row, column, currentRows, currentColumns;
+        private List<List<int>> qr;
 
-        private List<List<int>> corner;
-        private List<int> fixedCells;
+        private readonly List<List<int>> corner;
+        private readonly List<int> fixedCells;
 
-        private String HTMLstyle, nl;
-
+        private readonly string HTMLstyle, nl;
 
         private void addCorners()
         {
@@ -205,18 +204,24 @@ namespace qr
             {
                 row = new List<int>();
                 column = new List<int>();
+
                 String[] rowStrings = tbrows.Text.Split(',');
+
                 foreach (var rowString in rowStrings)
                 {
                     row.Add(Int32.Parse(rowString));
                 }
+
                 String[] columnStrings = tbcolumns.Text.Split(',');
+
                 foreach (var columnString in columnStrings)
                 {
                     column.Add(Int32.Parse(columnString));
                 }
+
                 String[] qrStrings = tbqr.Text.Split(',');
                 qr = new List<List<int>>();
+
                 for (int i = 0; i < row.Count; i++)
                 {
                     qr.Add(new List<int>());
@@ -226,13 +231,14 @@ namespace qr
                     }
                 }
 
+
                 addCorners();
                 updateCount();
                 addFixed();
                 updateCount();
 
                 checkSame();
-                updateCount();//****
+                updateCount();//red
 
                 int previousRowCount = 0;
                 int previousColumnCount = 0;
@@ -241,6 +247,7 @@ namespace qr
                 {
                     Dictionary<int, List<int>> availableRowCell = new Dictionary<int, List<int>>();
                     Dictionary<int, List<int>> availableColumnCell = new Dictionary<int, List<int>>();
+
                     for (int i = 0; i < row.Count; i++)
                     {
                         if (!rowFilled(i))
@@ -357,6 +364,7 @@ namespace qr
                             }
                         }
                     }
+
                     updateCount();
                     if (previousRowCount == availableRowCell.Count && previousColumnCount == availableColumnCell.Count)
                         throw new Exception("Cannot solve QR.");
@@ -384,7 +392,7 @@ namespace qr
             {
                 using (StreamWriter w = new StreamWriter(fs, Encoding.UTF8))
                 {
-                    w.WriteLine("<!DOCTYPE HTML>\r\n<HTML>\r\n<HEAD>\r\n<TITLE>QR code</TITLE>\r\n<STYLE>\r\n" + HTMLstyle + "\r\n</STYLE>\r\n</HEAD>\r\n<BODY>\r\n<table>");
+                    w.WriteLine("<!DOCTYPE HTML>" + nl + "<HTML>" + nl + "<HEAD>" + nl + "<TITLE>QR code</TITLE>" + nl + "<STYLE>" + nl + HTMLstyle + nl + "</STYLE>" + nl + "</HEAD>" + nl + "<BODY>" + nl + "<table>");
                     for (int i = 0; i < 21; i++)
                     {
                         w.Write("<tr> ");
@@ -393,10 +401,9 @@ namespace qr
                             if (qr[i][j] == 1) w.Write("<td style='background-color:black;'>" + " </td>");
                             else w.Write("<td>"+" </td>");
                         }
-                        w.Write(" </tr>");
-                        w.WriteLine("");
+                        w.Write(" </tr>" + nl);
                     }
-                    w.WriteLine("\r\n<table>\r\n</BODY>\r\n</HTML>");
+                    w.WriteLine(nl + "</table>" + nl + "</BODY>" + nl + "</HTML>");
                 }
             }
         }
